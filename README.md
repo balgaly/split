@@ -2,6 +2,8 @@
 
 Video splitter skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — split large video recordings into equal parts with no quality loss.
 
+![split demo](demo.png)
+
 ## Features
 
 - **Auto part-count** — scales by duration: up to 2 hours = 2 parts, up to 3 hours = 3 parts, etc.
