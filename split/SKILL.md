@@ -10,7 +10,7 @@ allowed-tools: Bash, Read, Glob, Grep
 argument-hint: <path to video file>
 metadata:
   author: Snir Balgaly
-  version: "1.0.0"
+  version: "1.0.1"
   tags: video, ffmpeg, splitting, productivity
 ---
 
@@ -21,12 +21,16 @@ You are a video splitting assistant. The user provides a path to a video file an
 The user provides the video file path as the skill argument. Store it as `INPUT_FILE`.
 
 - If no argument is provided, report an error and stop.
+- Verify the file exists and is a regular file (not a directory, symlink, or device node). If not, report an error and stop.
+- Verify the file has a known video extension (`.mp4`, `.mkv`, `.avi`, `.mov`, `.webm`, `.flv`, `.wmv`, `.ts`, `.m4v`). If not, ask the user to confirm before proceeding.
 - The file may or may not have an extension. Handle both cases.
 
 Derive these values:
 - `DIR` - the directory containing the file
-- `BASENAME` - the file name without extension (strip `.mp4` if present, otherwise use full name)
+- `BASENAME` - the file name without extension (strip the video extension if present, otherwise use full name)
 - `EXT` - always `.mp4` for output
+
+**Security: all variables derived from the file path (`INPUT_FILE`, `DIR`, `BASENAME`) MUST be double-quoted in every shell command to prevent injection via filenames containing shell metacharacters.**
 
 ## Step 2: Ensure ffmpeg Is Available
 
@@ -37,14 +41,15 @@ Check for ffmpeg in this order (stop at first success):
    - Windows: `$LOCALAPPDATA/Microsoft/WinGet/Packages/` (search for `ffmpeg.exe` under Gyan.FFmpeg directories)
    - macOS (Homebrew): `/opt/homebrew/bin/ffmpeg` or `/usr/local/bin/ffmpeg`
    - Linux: `/usr/bin/ffmpeg`
-3. If not found, attempt installation:
+3. If not found, **ask the user for permission before installing**. Tell them which command will be run and wait for confirmation. Do NOT install silently.
    - Windows: `winget install ffmpeg --accept-package-agreements --accept-source-agreements`
    - macOS: `brew install ffmpeg`
-   - Linux: `sudo apt-get install -y ffmpeg` (or equivalent)
+   - Linux: `sudo apt-get install -y ffmpeg` (or equivalent — always inform the user that `sudo` is required)
+4. If the user declines installation, report that ffmpeg is required and stop.
 
-Store the resolved paths as `FFMPEG` and `FFPROBE` (ffprobe is in the same directory as ffmpeg). Use these variables for all subsequent commands. Quote all paths.
+Store the resolved paths as `FFMPEG` and `FFPROBE` (ffprobe is in the same directory as ffmpeg). Use these variables for all subsequent commands. Always double-quote all paths.
 
-Do NOT print installation or detection details unless installation is actually needed. Be silent about ffmpeg resolution.
+Do NOT print detection details if ffmpeg is found on PATH or in a common location. Only inform the user if installation is needed.
 
 ## Step 3: Probe the Video
 
@@ -73,6 +78,8 @@ Check if files matching the pattern `<BASENAME> - Part1.mp4`, `<BASENAME> - Part
 
 If ALL expected parts already exist, report that splitting was already done and show their sizes. Do NOT re-split. Stop here.
 
+If SOME but not all expected parts exist (partial previous run), warn the user that partial output files were found and ask for confirmation before overwriting them.
+
 ## Step 6: Split the Video
 
 Split sequentially, one part at a time:
@@ -96,7 +103,7 @@ Where `START = (N-1) * SEGMENT_DURATION`. Place `-ss` AFTER `-i` (input-seeking,
 
 No `-t` flag on the last part - let it run to the end of the file to avoid losing trailing frames.
 
-Add `-y` to overwrite if a partial file exists from a previous failed run. Add `-loglevel warning` to reduce noise.
+Only add `-y` if the user confirmed overwriting partial files in Step 5. Never use `-y` without prior user confirmation. Add `-loglevel warning` to reduce noise.
 
 ## Step 7: Verify
 
