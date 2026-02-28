@@ -1,5 +1,8 @@
 # split
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Claude Code](https://img.shields.io/badge/Built%20with-Claude%20Code-blueviolet)](https://docs.anthropic.com/en/docs/claude-code)
+
 Video splitter skill for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — split large video recordings into equal parts with no quality loss.
 
 ![split demo](demo.gif)
