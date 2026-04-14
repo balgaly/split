@@ -1,0 +1,27 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.*
+
+# Temporary files
+*.tmp
+*.bak
+
+# Build artifacts
+*.log
+
+# Dev tooling
+.claude/
+.playwright-mcp/
+.a5c/
